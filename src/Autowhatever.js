@@ -47,7 +47,10 @@ export default class Autowhatever extends Component {
     theme: PropTypes.oneOfType([               // Styles. See: https://github.com/markdalgleish/react-themeable
       PropTypes.object,
       PropTypes.array
-    ])
+    ]),
+    onBtnClicked: PropTypes.func,
+    disclaimer: PropTypes.string,
+    sugLimit: PropTypes.integer
   };
 
   static defaultProps = {
@@ -69,7 +72,8 @@ export default class Autowhatever extends Component {
     itemProps: emptyObject,
     highlightedSectionIndex: null,
     highlightedItemIndex: null,
-    theme: defaultTheme
+    theme: defaultTheme,
+    sugLimit: 3
   };
 
   constructor(props) {
@@ -78,7 +82,8 @@ export default class Autowhatever extends Component {
     this.highlightedItem = null;
 
     this.state = {
-      isInputFocused: false
+      isInputFocused: false,
+      showTop: true
     };
 
     this.setSectionsItems(props);
@@ -154,6 +159,10 @@ export default class Autowhatever extends Component {
     return `react-autowhatever-${id}-${section}-item-${itemIndex}`;
   };
 
+  updateBtnLabel = () => {
+    this.props.onBtnClicked.call();
+    this.setState({ showTop: !this.state.showTop });
+  }
   renderSections() {
     if (this.allSectionsAreEmpty) {
       return null;
@@ -162,10 +171,10 @@ export default class Autowhatever extends Component {
     const { theme } = this;
     const {
       id, items, renderItem, renderItemData, renderSectionTitle,
-      highlightedSectionIndex, highlightedItemIndex, itemProps
+      highlightedSectionIndex, highlightedItemIndex, itemProps, sugLimit
     } = this.props;
 
-    return items.map((section, sectionIndex) => {
+    let rtnArr = items.map((section, sectionIndex) => {
       const keyPrefix = `react-autowhatever-${id}-`;
       const sectionKeyPrefix = `${keyPrefix}section-${sectionIndex}-`;
       const isFirstSection = (sectionIndex === 0);
@@ -197,6 +206,14 @@ export default class Autowhatever extends Component {
       );
       /* eslint-enable react/jsx-key */
     });
+
+    rtnArr.unshift((<div>
+      <div key={'autosuggest-'+id+'-sort-btn'} className='autosuggest-sort-btn' onClick={this.updateBtnLabel}>
+        {'Show '+(!this.state.showTop?'Top ':'Bottom ')+sugLimit}
+      </div>
+    </div>));
+    rtnArr.push((<div key={'autosuggest-'+id+'-disclaimer'} className='autosuggest-disclaimer'> {this.props.disclaimer}</div>));
+    return rtnArr;
   }
 
   renderItems() {
